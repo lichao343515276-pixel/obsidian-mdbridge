@@ -37,7 +37,7 @@ GFM rendering, Notion import, LaTeX enhancement, and standard Markdown export fo
 
 ### Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/mdbridge/obsidian-mdbridge/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/lichao343515276-pixel/obsidian-mdbridge/releases)
 2. Extract `main.js`, `manifest.json`, `styles.css`, and `styles/` into your vault's `.obsidian/plugins/mdbridge/` folder
 3. Enable the plugin in Obsidian Settings → Community Plugins
 

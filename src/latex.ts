@@ -1,13 +1,13 @@
 import katex from "katex";
 import "katex/dist/contrib/mhchem.min.js";
-import { App, MarkdownPostProcessor, MarkdownPostProcessorContext, Plugin } from "obsidian";
+import { App, MarkdownPostProcessorContext, Plugin } from "obsidian";
 import { MDBridgeSettings } from "./types";
 
 const INLINE_MATH_PATTERN = /\$([^\$\n]+?)\$/g;
 const BLOCK_MATH_PATTERN = /\$\$([\s\S]+?)\$\$/g;
 
 function safeRenderKatex(tex: string, displayMode: boolean, className: string): HTMLElement {
-  const container = document.createElement("span");
+  const container = createEl("span");
   container.className = className;
   try {
     katex.render(tex, container, {
@@ -92,7 +92,7 @@ export class LatexProcessor {
           document.createTextNode(text.slice(lastIndex, match.index)),
         );
       }
-      const wrapper = document.createElement("div");
+      const wrapper = createEl("div");
       wrapper.className = "mdbridge-math mdbridge-math-block";
       try {
         katex.render(match[1].trim(), wrapper, {
@@ -186,7 +186,7 @@ export class LatexProcessor {
     const trimmed = source.trim();
     const isBlock = source.includes("\n") || trimmed.length > 50;
 
-    const container = document.createElement("div");
+    const container = createEl("div");
     container.className = isBlock
       ? "mdbridge-math mdbridge-math-codeblock"
       : "mdbridge-math mdbridge-math-inline";
@@ -213,7 +213,7 @@ export class LatexProcessor {
     if (!this.settings.enableLatex) return;
 
     const trimmed = source.trim();
-    const container = document.createElement("div");
+    const container = createEl("div");
     container.className = "mdbridge-math mdbridge-chem";
     try {
       katex.render(trimmed, container, {

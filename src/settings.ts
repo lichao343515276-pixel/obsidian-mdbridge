@@ -261,7 +261,7 @@ class LicenseKeyModal extends Modal {
 
   onOpen(): void {
     const { contentEl } = this;
-    contentEl.createEl("h2", { text: "Activate MDBridge Pro" });
+    new Setting(contentEl).setName("Activate MDBridge Pro").setHeading();
     contentEl.createEl("p", {
       text: "Enter your license key to unlock Pro features.",
       cls: "mdbridge-modal-desc",

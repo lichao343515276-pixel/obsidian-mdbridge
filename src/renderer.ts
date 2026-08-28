@@ -1,4 +1,4 @@
-import { App, MarkdownPostProcessor, MarkdownPostProcessorContext, Plugin, TFile, Editor } from "obsidian";
+import { App, MarkdownPostProcessorContext, Plugin, TFile, Editor } from "obsidian";
 import { MDBridgeSettings } from "./types";
 
 const TASK_CHECKED_PATTERN = /^- \[x\] /i;
@@ -63,7 +63,7 @@ export class GfmRenderer {
       const parent = textNode.parentElement;
       if (!parent) continue;
 
-      const span = document.createElement("span");
+      const span = createEl("span");
       this.buildStrikethroughNodes(span, text);
       parent.replaceChild(span, textNode);
     }
@@ -132,7 +132,7 @@ export class GfmRenderer {
       const fnContent = this.findFootnoteContent(container, footnoteId);
       if (!fnContent) return;
 
-      tooltip = document.createElement("div");
+      tooltip = createEl("div");
       tooltip.addClass("mdbridge-footnote-tooltip");
       tooltip.textContent = fnContent;
       document.body.appendChild(tooltip);
@@ -275,7 +275,7 @@ export class GfmRenderer {
       const li = item as HTMLElement;
       if (li.querySelector(".mdbridge-task-date")) return;
 
-      const dateSpan = document.createElement("span");
+      const dateSpan = createEl("span");
       dateSpan.addClass("mdbridge-task-date");
       const text = li.textContent || "";
       const dateMatch = text.match(/✅\s*(\d{4}-\d{2}-\d{2})/);
@@ -289,16 +289,52 @@ export class GfmRenderer {
   private definitionListProcessor(el: HTMLElement, _ctx: MarkdownPostProcessorContext): void {
     if (!this.settings.enableDefinitionLists) return;
 
-    const rawHtml = el.innerHTML;
-    if (!rawHtml.includes("\n: ")) return;
+    if (!el.textContent?.includes("\n: ")) return;
 
-    const converted = this.convertDefinitionLists(rawHtml);
-    if (converted !== rawHtml) {
-      const template = document.createElement("template");
-      template.innerHTML = converted;
-      el.empty();
-      el.appendChild(template.content.cloneNode(true));
-    }
+    const paragraphs = el.querySelectorAll("p");
+    paragraphs.forEach((p) => {
+      const pEl = p as HTMLElement;
+      const text = pEl.textContent || "";
+      if (!text.includes("\n: ")) return;
+
+      const lines = text.split("\n");
+      let hasDefList = false;
+      for (const line of lines) {
+        if (line.trim().startsWith(":")) {
+          hasDefList = true;
+          break;
+        }
+      }
+      if (!hasDefList) return;
+
+      const dl = createEl("dl", { cls: "mdbridge-deflist" });
+      let currentTerm: string | null = null;
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed === "") {
+          currentTerm = null;
+          continue;
+        }
+        if (trimmed.startsWith(":")) {
+          const def = trimmed.slice(1).trim();
+          if (currentTerm !== null) {
+            const dt = createEl("dt");
+            dt.textContent = currentTerm;
+            dl.appendChild(dt);
+          }
+          const dd = createEl("dd");
+          dd.textContent = def;
+          dl.appendChild(dd);
+        } else {
+          currentTerm = trimmed;
+        }
+      }
+
+      if (dl.children.length > 0) {
+        pEl.replaceWith(dl);
+      }
+    });
   }
 
   convertDefinitionLists(html: string): string {
@@ -320,7 +356,7 @@ export class GfmRenderer {
     if (!this.settings.enableDefinitionLists) return;
 
     const lines = source.trim().split("\n");
-    const dl = document.createElement("dl");
+    const dl = createEl("dl");
     dl.addClass("mdbridge-deflist");
     dl.addClass("mdbridge-deflist-codeblock");
 
@@ -335,13 +371,13 @@ export class GfmRenderer {
       if (trimmed.startsWith(":")) {
         const def = trimmed.slice(1).trim();
         if (currentTerm) {
-          const dd = document.createElement("dd");
+          const dd = createEl("dd");
           dd.textContent = def;
           dl.appendChild(dd);
         }
       } else {
         currentTerm = trimmed;
-        const dt = document.createElement("dt");
+        const dt = createEl("dt");
         dt.textContent = trimmed;
         dl.appendChild(dt);
       }

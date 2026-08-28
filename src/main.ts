@@ -1,12 +1,5 @@
 import { Notice, Plugin } from "obsidian";
-import {
-  MDBridgeSettings,
-  DEFAULT_SETTINGS,
-  ExportOptions,
-  ExportResult,
-  NotionImportOptions,
-  ImportResult,
-} from "./types";
+import { MDBridgeSettings, DEFAULT_SETTINGS } from "./types";
 import { MDBridgeSettingTab } from "./settings";
 import { GfmRenderer } from "./renderer";
 import { LatexProcessor } from "./latex";
