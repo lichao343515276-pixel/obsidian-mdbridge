@@ -27,9 +27,9 @@ export class MarkdownExporter {
 
     await this.ensureTargetFolder(options.targetPath);
 
-    const files = sourceFolder === "/"
+    const files = sourceFolder === "/" || !(folder instanceof TFolder)
       ? this.collectAllMarkdownFiles()
-      : this.collectMarkdownFiles(folder as TFolder);
+      : this.collectMarkdownFiles(folder);
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];

@@ -3,8 +3,8 @@
   "name": "MDBridge - Markdown Compatibility Enhancement",
   "version": "0.9.0",
   "minAppVersion": "1.5.0",
-  "description": "GFM rendering, Notion import, LaTeX enhancement, and standard Markdown export for Obsidian.",
+  "description": "GFM rendering, Notion import, LaTeX enhancement, and standard Markdown export.",
   "author": "MDBridge Team",
-  "authorUrl": "https://github.com/lichao343515276-pixel/obsidian-mdbridge",
+  "authorUrl": "https://github.com/lichao343515276-pixel",
   "isDesktopOnly": false
 }

@@ -1,7 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import path from "path";
-import { copyFileSync, mkdirSync, existsSync } from "fs";
+import { copyFileSync, mkdirSync, existsSync, readFileSync, writeFileSync } from "fs";
 import builtins from "builtin-modules";
 
 const prod = process.argv[2] === "production";
@@ -40,9 +40,20 @@ function copyKatexAssets() {
     mkdirSync(stylesDir, { recursive: true });
   }
   const katexCssSrc = path.join(process.cwd(), "node_modules", "katex", "dist", "katex.min.css");
+  const stylesSrc = path.join(process.cwd(), "styles.css");
+
   if (existsSync(katexCssSrc)) {
     copyFileSync(katexCssSrc, path.join(stylesDir, "katex.min.css"));
     console.log("Copied katex.min.css to styles/");
+  }
+
+  if (existsSync(katexCssSrc) && existsSync(stylesSrc)) {
+    const stylesContent = readFileSync(stylesSrc, "utf8");
+    if (!stylesContent.includes("KaTeX_Main")) {
+      const katexContent = readFileSync(katexCssSrc, "utf8");
+      writeFileSync(stylesSrc, katexContent + "\n" + stylesContent);
+      console.log("Merged katex.min.css into styles.css");
+    }
   }
 }
 

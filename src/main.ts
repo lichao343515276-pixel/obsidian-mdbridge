@@ -64,11 +64,9 @@ export default class MDBridgePlugin extends Plugin {
       },
     );
 
-    console.log("MDBridge plugin loaded");
   }
 
   onunload(): void {
-    console.log("MDBridge plugin unloaded");
   }
 
   async loadSettings(): Promise<void> {
@@ -94,7 +92,6 @@ export default class MDBridgePlugin extends Plugin {
       const summary = `Imported ${result.filesProcessed} files, skipped ${result.filesSkipped}`;
       if (result.errors.length > 0) {
         new Notice(`${summary} (${result.errors.length} errors)`, 10000);
-        console.warn("MDBridge import errors:", result.errors);
       } else {
         new Notice(summary, 5000);
       }
@@ -112,7 +109,6 @@ export default class MDBridgePlugin extends Plugin {
       const summary = `Exported ${result.filesExported} files`;
       if (result.errors.length > 0) {
         new Notice(`${summary} (${result.errors.length} errors)`, 10000);
-        console.warn("MDBridge export errors:", result.errors);
       } else {
         new Notice(summary, 5000);
       }
@@ -134,7 +130,6 @@ export default class MDBridgePlugin extends Plugin {
       new Notice(`Exported: ${result}`, 5000);
     } catch (e) {
       new Notice(`Export failed: ${e.message}`, 10000);
-      console.error("MDBridge export error:", e);
     }
   }
 }

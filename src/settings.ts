@@ -23,6 +23,17 @@ export class MDBridgeSettingTab extends PluginSettingTab {
     this.renderAboutSection(containerEl);
   }
 
+  getSettingDefinitions() {
+    return [
+      { key: "enableStrikethrough", label: "Strikethrough rendering" },
+      { key: "enableFootnotes", label: "Footnote enhancements" },
+      { key: "enableTaskLists", label: "Interactive task lists" },
+      { key: "taskListShowDates", label: "Task completion dates" },
+      { key: "enableDefinitionLists", label: "Definition lists" },
+      { key: "enableLatex", label: "LaTeX/KaTeX formulas" },
+    ];
+  }
+
   private renderRenderingSection(containerEl: HTMLElement): void {
     containerEl.createEl("h3", { text: "GFM Rendering" });
 

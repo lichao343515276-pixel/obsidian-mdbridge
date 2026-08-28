@@ -6,10 +6,26 @@ import { MDBridgeSettings } from "./types";
 const INLINE_MATH_PATTERN = /\$([^\$\n]+?)\$/g;
 const BLOCK_MATH_PATTERN = /\$\$([\s\S]+?)\$\$/g;
 
+function safeRenderKatex(tex: string, displayMode: boolean, className: string): HTMLElement {
+  const container = document.createElement("span");
+  container.className = className;
+  try {
+    katex.render(tex, container, {
+      displayMode,
+      throwOnError: true,
+      output: "html",
+      strict: false,
+    });
+  } catch {
+    container.textContent = tex;
+    container.addClass("mdbridge-math-error");
+  }
+  return container;
+}
+
 export class LatexProcessor {
   private app: App;
   private settings: MDBridgeSettings;
-  private cssLoaded = false;
 
   constructor(app: App, settings: MDBridgeSettings) {
     this.app = app;
@@ -26,49 +42,8 @@ export class LatexProcessor {
     plugin.registerMarkdownCodeBlockProcessor("chem", this.chemCodeBlockProcessor.bind(this));
   }
 
-  ensureCssLoaded(): void {
-    if (this.cssLoaded) return;
-    this.injectKatexCss();
-    this.cssLoaded = true;
-  }
-
-  private injectKatexCss(): void {
-    const existing = document.querySelector('link[data-mdbridge-katex]');
-    if (existing) return;
-
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.setAttribute("data-mdbridge-katex", "true");
-    link.href = "app://local.mdbridge/styles/katex.min.css";
-    document.head.appendChild(link);
-  }
-
-  renderToString(tex: string, displayMode: boolean): string {
-    try {
-      const result = katex.renderToString(tex, {
-        displayMode,
-        throwOnError: true,
-        output: "html",
-        strict: false,
-      });
-      return result;
-    } catch {
-      return `<span class="mdbridge-math-error">${this.escapeHtml(tex)}</span>`;
-    }
-  }
-
-  private escapeHtml(text: string): string {
-    return text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
   private mathPostProcessor(el: HTMLElement, _ctx: MarkdownPostProcessorContext): void {
     if (!this.settings.enableLatex) return;
-
-    this.ensureCssLoaded();
-
     this.processBlockMath(el);
     this.processInlineMath(el);
   }
@@ -96,20 +71,49 @@ export class LatexProcessor {
       if (!parent) continue;
       if (parent.closest(".mdbridge-math, code, pre")) continue;
 
-      const html = this.convertBlockMath(text);
-      if (html !== text) {
-        const span = document.createElement("span");
-        span.innerHTML = html;
-        parent.replaceChild(span, textNode);
+      const fragment = this.buildBlockMathFragment(text);
+      if (fragment) {
+        parent.replaceChild(fragment, textNode);
       }
     }
   }
 
-  private convertBlockMath(text: string): string {
-    return text.replace(BLOCK_MATH_PATTERN, (_match, formula: string) => {
-      const trimmed = formula.trim();
-      return `<div class="mdbridge-math mdbridge-math-block">${this.renderToString(trimmed, true)}</div>`;
-    });
+  private buildBlockMathFragment(text: string): DocumentFragment | null {
+    const fragment = document.createDocumentFragment();
+    let lastIndex = 0;
+    let found = false;
+    const pattern = new RegExp(BLOCK_MATH_PATTERN.source, "g");
+    let match: RegExpExecArray | null;
+
+    while ((match = pattern.exec(text)) !== null) {
+      found = true;
+      if (match.index > lastIndex) {
+        fragment.appendChild(
+          document.createTextNode(text.slice(lastIndex, match.index)),
+        );
+      }
+      const wrapper = document.createElement("div");
+      wrapper.className = "mdbridge-math mdbridge-math-block";
+      try {
+        katex.render(match[1].trim(), wrapper, {
+          displayMode: true,
+          throwOnError: true,
+          output: "html",
+          strict: false,
+        });
+      } catch {
+        wrapper.textContent = match[1].trim();
+        wrapper.addClass("mdbridge-math-error");
+      }
+      fragment.appendChild(wrapper);
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+
+    return found ? fragment : null;
   }
 
   private processInlineMath(el: HTMLElement): void {
@@ -135,19 +139,41 @@ export class LatexProcessor {
       if (!parent) continue;
       if (parent.closest(".mdbridge-math, code, pre")) continue;
 
-      const html = this.convertInlineMath(text);
-      if (html !== text) {
-        const span = document.createElement("span");
-        span.innerHTML = html;
-        parent.replaceChild(span, textNode);
+      const fragment = this.buildInlineMathFragment(text);
+      if (fragment) {
+        parent.replaceChild(fragment, textNode);
       }
     }
   }
 
-  private convertInlineMath(text: string): string {
-    return text.replace(INLINE_MATH_PATTERN, (_match, formula: string) => {
-      return `<span class="mdbridge-math mdbridge-math-inline">${this.renderToString(formula, false)}</span>`;
-    });
+  private buildInlineMathFragment(text: string): DocumentFragment | null {
+    const fragment = document.createDocumentFragment();
+    let lastIndex = 0;
+    let found = false;
+    const pattern = new RegExp(INLINE_MATH_PATTERN.source, "g");
+    let match: RegExpExecArray | null;
+
+    while ((match = pattern.exec(text)) !== null) {
+      found = true;
+      if (match.index > lastIndex) {
+        fragment.appendChild(
+          document.createTextNode(text.slice(lastIndex, match.index)),
+        );
+      }
+      const span = safeRenderKatex(
+        match[1],
+        false,
+        "mdbridge-math mdbridge-math-inline",
+      );
+      fragment.appendChild(span);
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+
+    return found ? fragment : null;
   }
 
   private mathCodeBlockProcessor(
@@ -157,8 +183,6 @@ export class LatexProcessor {
   ): void {
     if (!this.settings.enableLatex) return;
 
-    this.ensureCssLoaded();
-
     const trimmed = source.trim();
     const isBlock = source.includes("\n") || trimmed.length > 50;
 
@@ -166,7 +190,17 @@ export class LatexProcessor {
     container.className = isBlock
       ? "mdbridge-math mdbridge-math-codeblock"
       : "mdbridge-math mdbridge-math-inline";
-    container.innerHTML = this.renderToString(trimmed, isBlock);
+    try {
+      katex.render(trimmed, container, {
+        displayMode: isBlock,
+        throwOnError: true,
+        output: "html",
+        strict: false,
+      });
+    } catch {
+      container.textContent = trimmed;
+      container.addClass("mdbridge-math-error");
+    }
 
     el.appendChild(container);
   }
@@ -178,14 +212,36 @@ export class LatexProcessor {
   ): void {
     if (!this.settings.enableLatex) return;
 
-    this.ensureCssLoaded();
-
     const trimmed = source.trim();
     const container = document.createElement("div");
     container.className = "mdbridge-math mdbridge-chem";
-    container.innerHTML = this.renderToString(trimmed, true);
+    try {
+      katex.render(trimmed, container, {
+        displayMode: true,
+        throwOnError: true,
+        output: "html",
+        strict: false,
+      });
+    } catch {
+      container.textContent = trimmed;
+      container.addClass("mdbridge-math-error");
+    }
 
     el.appendChild(container);
+  }
+
+  renderToString(tex: string, displayMode: boolean): string {
+    try {
+      return katex.renderToString(tex, {
+        displayMode,
+        throwOnError: true,
+        output: "html",
+        strict: false,
+      });
+    } catch {
+      const escaped = tex.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      return `<span class="mdbridge-math-error">${escaped}</span>`;
+    }
   }
 
   convertInlineToHtml(text: string): string {

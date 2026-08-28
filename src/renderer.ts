@@ -64,7 +64,7 @@ export class GfmRenderer {
       if (!parent) continue;
 
       const span = document.createElement("span");
-      span.innerHTML = this.convertStrikethrough(text);
+      this.buildStrikethroughNodes(span, text);
       parent.replaceChild(span, textNode);
     }
   }
@@ -75,6 +75,24 @@ export class GfmRenderer {
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
     return escaped.replace(/~~(.+?)~~/g, '<del class="mdbridge-strikethrough">$1</del>');
+  }
+
+  private buildStrikethroughNodes(container: HTMLElement, text: string): void {
+    const escaped = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    const parts = escaped.split(/(~~.+?~~)/g);
+    for (const part of parts) {
+      const match = part.match(/^~~(.+?)~~$/);
+      if (match) {
+        const del = container.createEl("del");
+        del.addClass("mdbridge-strikethrough");
+        del.textContent = match[1];
+      } else if (part) {
+        container.appendChild(document.createTextNode(part));
+      }
+    }
   }
 
   private footnoteProcessor(el: HTMLElement, _ctx: MarkdownPostProcessorContext): void {
@@ -276,7 +294,10 @@ export class GfmRenderer {
 
     const converted = this.convertDefinitionLists(rawHtml);
     if (converted !== rawHtml) {
-      el.innerHTML = converted;
+      const template = document.createElement("template");
+      template.innerHTML = converted;
+      el.empty();
+      el.appendChild(template.content.cloneNode(true));
     }
   }
 
