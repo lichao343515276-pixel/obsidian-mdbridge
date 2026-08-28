@@ -1,6 +1,6 @@
 {
   "name": "obsidian-mdbridge",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "GFM rendering, Notion import, LaTeX enhancement, and standard Markdown export for Obsidian.",
   "main": "main.js",
   "type": "module",
