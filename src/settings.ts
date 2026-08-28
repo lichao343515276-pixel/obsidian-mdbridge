@@ -14,8 +14,6 @@ export class MDBridgeSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "MDBridge Settings" });
-
     this.renderRenderingSection(containerEl);
     this.renderTaskListSection(containerEl);
     this.renderFootnoteSection(containerEl);
@@ -35,7 +33,7 @@ export class MDBridgeSettingTab extends PluginSettingTab {
   }
 
   private renderRenderingSection(containerEl: HTMLElement): void {
-    containerEl.createEl("h3", { text: "GFM Rendering" });
+    new Setting(containerEl).setName("GFM Rendering").setHeading();
 
     new Setting(containerEl)
       .setName("Strikethrough")
@@ -75,7 +73,7 @@ export class MDBridgeSettingTab extends PluginSettingTab {
   }
 
   private renderTaskListSection(containerEl: HTMLElement): void {
-    containerEl.createEl("h3", { text: "Task Lists" });
+    new Setting(containerEl).setName("Task Lists").setHeading();
 
     new Setting(containerEl)
       .setName("Interactive task lists")
@@ -103,7 +101,7 @@ export class MDBridgeSettingTab extends PluginSettingTab {
   }
 
   private renderFootnoteSection(containerEl: HTMLElement): void {
-    containerEl.createEl("h3", { text: "Footnotes" });
+    new Setting(containerEl).setName("Footnotes").setHeading();
 
     new Setting(containerEl)
       .setName("Footnote enhancement")
@@ -131,7 +129,7 @@ export class MDBridgeSettingTab extends PluginSettingTab {
   }
 
   private renderProSection(containerEl: HTMLElement): void {
-    containerEl.createEl("h3", { text: "MDBridge Pro" });
+    new Setting(containerEl).setName("MDBridge Pro").setHeading();
 
     const statusText = this.plugin.license.isProEnabled()
       ? "Pro activated — all features unlocked"
@@ -232,7 +230,7 @@ export class MDBridgeSettingTab extends PluginSettingTab {
   }
 
   private renderAboutSection(containerEl: HTMLElement): void {
-    containerEl.createEl("h3", { text: "About" });
+    new Setting(containerEl).setName("About").setHeading();
 
     new Setting(containerEl)
       .setName("Version")
